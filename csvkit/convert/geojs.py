@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-from cStringIO import StringIO
 import json
+
+import six
 
 from csvkit import CSVKitWriter
 
@@ -44,7 +45,7 @@ def geojson2csv(f, key=None, **kwargs):
     header.extend(fields)
     header.append('geojson')
 
-    o = StringIO()
+    o = six.StringIO()
     writer = CSVKitWriter(o)
 
     writer.writerow(header)
