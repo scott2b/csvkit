@@ -39,10 +39,15 @@ The header line is required though the columns may be in any order::
                             list of objects to be converted when processing JSON.
       -y SNIFFLIMIT, --snifflimit SNIFFLIMIT
                             Limit CSV dialect sniffing to the specified number of
-                            bytes.
+                            bytes. Specify "0" to disable sniffing entirely.
       --sheet SHEET         The name of the XLSX sheet to operate on.
+      --no-inference        Disable type inference when parsing the input.
 
 Also see: :doc:`common_arguments`.
+
+.. note::
+
+    DBF format is only supported when running on Python 2.
 
 Examples
 ========

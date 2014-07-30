@@ -1,8 +1,75 @@
-0.5.1
+0.8.0
 -----
 
-* Added Chris Rosenthal to AUTHORS.
-* Fixed multi-file input to csvsql. (#193)
+* Add pnaimoli to AUTHORS.
+* Fix column specification in csvstat. (#236)
+* Added "Tips and Tricks" documentation. (#297, #298)
+* Add Espartaco Palma to AUTHORS.
+* Remove unnecessary enumerate calls. (#292)
+* Deprecated DBF support for Python 3+.
+* Add support for Python 3.3 and 3.4 (#239)
+
+0.7.3
+-----
+
+* Fix date handling with openpyxl > 2.0 (#285)
+* Add Kristina Durivage to AUTHORS. (#243)
+* Added Richard Low to AUTHORS.
+* Support SQL queries "directly" on CSV files. (#276)
+* Add Tasneem Raja to AUTHORS.
+* Fix off-by-one error in open ended column ranges. (#238)
+* Add Matt Pettis to AUTHORS.
+* Add line numbers flag to csvlook (#244)
+* Only install argparse for Python < 2.7. (#224)
+* Add Diego Rabatone Oliveira to AUTHORS.
+* Add Ryan Murphy to AUTHORS.
+* Fix DBF dependency. (#270)
+
+0.7.2
+-----
+
+* Fix CHANGELOG for release.
+
+0.7.1
+-----
+
+* Fix homepage url in setup.py.
+
+0.7.0
+-----
+
+* Fix XLSX datetime normalization bug. (#223)
+* Add raistlin7447 to AUTHORS.
+* Merged sql2csv utility (#259).
+* Add Jeroen Janssens to AUTHORS.
+* Validate csvsql DB connections before parsing CSVs. (#257)
+* Clarify install process for Ubuntu. (#249)
+* Clarify docs for --escapechar. (#242)
+* Make ``import csvkit`` API compatible with ``import csv``.
+* Update Travis CI link. (#258)
+* Add Sébastien Fievet to AUTHORS.
+* Use case-sensitive name for SQLAlchemy (#237)
+* Add Travis Swicegood to AUTHORS.
+
+0.6.1
+-----
+
+* Add Chris Rosenthal to AUTHORS.
+* Fix multi-file input to csvsql. (#193)
+* Passing --snifflimit=0 to disable dialect sniffing. (#190)
+* Add aarcro to the AUTHORS file.
+* Improve performance of csvgrep. (#204)
+* Add Matt Dudys to AUTHORS.
+* Add support for --skipinitialspace. (#201)
+* Add Joakim Lundborg to AUTHORS.
+* Add --no-inference option to in2csv and csvsql. (#206)
+* Add Federico Scrinzi to AUTHORS file.
+* Add --no-header-row to all tools. (#189)
+* Fix csvstack blowing up on empty files. (#209)
+* Add Chris Rosenthal to AUTHORS file.
+* Add --db-schema option to csvsql. (#216)
+* Add Shane StClair to AUTHORS file.
+* Add --no-inference support to csvsort. (#222)
 
 0.5.0
 -----

@@ -20,17 +20,19 @@ class CSV2TSV(CSVKitUtility):
                 '2 = Quote non-numeric, 3 = Quote None')
 
     def main(self):
-        rows = CSVKitReader(self.args.file, **self.reader_kwargs)
-        column_names = rows.next()
-        column_ids = parse_column_identifiers([], column_names,
-            self.args.zero_based)
-        output = CSVKitWriter(self.output_file,
-            delimiter=self.args.output_delimiter,
-            quoting=self.args.output_quoting,
-            quotechar=self.args.output_quotechar, **self.writer_kwargs)
-        output.writerow([column_names[c] for c in column_ids])
-        for i, row in enumerate(rows):
-            output.writerow(row)
+        
+        with self._open_input_file(self.args.input_path) as input_file:
+            rows = CSVKitReader(input_file, **self.reader_kwargs)
+            column_names = rows.next()
+            column_ids = parse_column_identifiers([], column_names,
+                self.args.zero_based)
+            output = CSVKitWriter(self.output_file,
+                delimiter=self.args.output_delimiter,
+                quoting=self.args.output_quoting,
+                quotechar=self.args.output_quotechar, **self.writer_kwargs)
+            output.writerow([column_names[c] for c in column_ids])
+            for i, row in enumerate(rows):
+                output.writerow(row)
 
 
 def launch_new_instance():

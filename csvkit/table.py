@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 
 import datetime
-from cStringIO import StringIO
+import itertools
+
+import six
 
 from csvkit import CSVKitReader, CSVKitWriter
 from csvkit import sniffer
 from csvkit import typeinference
 from csvkit.cli import parse_column_identifiers
+from csvkit.headers import make_default_headers
 
 class InvalidType(object):
     """
@@ -18,14 +21,18 @@ class Column(list):
     """
     A normalized data column and inferred annotations (nullable, etc.).
     """
-    def __init__(self, order, name, l, normal_type=InvalidType, blanks_as_nulls=True):
+    def __init__(self, order, name, l, normal_type=InvalidType, blanks_as_nulls=True, infer_types=True):
         """
         Construct a column from a sequence of values.
         
         If normal_type is not InvalidType, inference will be skipped and values assumed to have already been normalized.
+        If infer_types is False, type inference will be skipped and the type assumed to be unicode.
         """
         if normal_type != InvalidType:
             t = normal_type
+            data = l
+        elif not infer_types:
+            t = six.text_type 
             data = l
         else:
             t, data = typeinference.normalize_column_type(l, blanks_as_nulls=blanks_as_nulls)
@@ -42,13 +49,19 @@ class Column(list):
         """
         Stringify a description of this column.
         """
-        return u'%3i: %s (%s)' % (self.order, self.name, self.type)
+        return '%3i: %s (%s)' % (self.order, self.name, self.type)
 
     def __getitem__(self, key):
         """
         Return null for keys beyond the range of the column. This allows for columns to be of uneven length and still be merged into rows cleanly.
         """
-        if key >= len(self):
+        l = len(self)
+
+        if isinstance(key, slice):
+            indices = six.moves.range(*key.indices(l))
+            return [(list.__getitem__(self, i) if i < l else None) for i in indices]
+
+        if key >= l:
             return None
 
         return list.__getitem__(self, key)
@@ -67,7 +80,7 @@ class Column(list):
         """
         l = 0
 
-        if self.type == unicode:
+        if self.type == six.text_type:
             l = max([len(d) if d else 0 for d in self])
 
             if self.has_nulls():
@@ -93,7 +106,7 @@ class Table(list):
         """
         Stringify a description of all columns in this table.
         """
-        return u'\n'.join([unicode(c) for c in self])
+        return '\n'.join([six.text_type(c) for c in self])
 
     def _reindex_columns(self):
         """
@@ -174,7 +187,7 @@ class Table(list):
         return row_data
 
     @classmethod
-    def from_csv(cls, f, name='from_csv_table', snifflimit=None, column_ids=None, blanks_as_nulls=True, zero_based=False, **kwargs):
+    def from_csv(cls, f, name='from_csv_table', snifflimit=None, column_ids=None, blanks_as_nulls=True, zero_based=False, infer_types=True, no_header_row=False, **kwargs):
         """
         Creates a new Table from a file-like object containing CSV data.
 
@@ -187,30 +200,41 @@ class Table(list):
         # which are not seekable and thus must be buffered
         contents = f.read()
 
-        if snifflimit:
-            sample = contents[:snifflimit]
-        else:
-            sample = contents
+        # snifflimit == 0 means do not sniff
+        if snifflimit is None:
+            kwargs['dialect'] = sniffer.sniff_dialect(contents)
+        elif snifflimit > 0:
+            kwargs['dialect'] = sniffer.sniff_dialect(contents[:snifflimit])
 
-        dialect = sniffer.sniff_dialect(sample)
+        f = six.StringIO(contents)
+        rows = CSVKitReader(f, **kwargs)
 
-        f = StringIO(contents) 
-        reader = CSVKitReader(f, dialect=dialect, **kwargs)
+        if no_header_row:
+            # Peek at a row to infer column names from
+            row = next(rows) 
 
-        headers = reader.next()
-        
-        if column_ids:
+            headers = make_default_headers(len(row))
             column_ids = parse_column_identifiers(column_ids, headers, zero_based)
             headers = [headers[c] for c in column_ids]
-        else:
-            column_ids = range(len(headers))
-        
-        data_columns = [[] for c in headers]
+            data_columns = [[] for c in headers]
 
-        for row in reader:
-            for i, d in enumerate(row):
+            # Put row back on top
+            rows = itertools.chain([row], rows)
+        else:
+            headers = next(rows)
+            
+            if column_ids:
+                column_ids = parse_column_identifiers(column_ids, headers, zero_based)
+                headers = [headers[c] for c in column_ids]
+            else:
+                column_ids = range(len(headers))
+        
+            data_columns = [[] for c in headers]
+
+        for i, row in enumerate(rows):
+            for j, d in enumerate(row):
                 try:
-                    data_columns[i].append(row[column_ids[i]].strip())
+                    data_columns[j].append(row[column_ids[j]].strip())
                 except IndexError:
                     # Non-rectangular data is truncated
                     break
@@ -218,7 +242,7 @@ class Table(list):
         columns = []
 
         for i, c in enumerate(data_columns):
-            columns.append(Column(column_ids[i], headers[i], c, blanks_as_nulls=blanks_as_nulls))
+            columns.append(Column(column_ids[i], headers[i], c, blanks_as_nulls=blanks_as_nulls, infer_types=infer_types))
 
         return Table(columns, name=name)
 
@@ -234,14 +258,14 @@ class Table(list):
             for c in self:
                 # Stringify datetimes, dates, and times
                 if c.type in [datetime.datetime, datetime.date, datetime.time]:
-                    out_columns.append([unicode(v.isoformat()) if v != None else None for v in c])
+                    out_columns.append([six.text_type(v.isoformat()) if v != None else None for v in c])
                 else:
                     out_columns.append(c)
 
             # Convert columns to rows 
-            return zip(*out_columns)
+            return list(zip(*out_columns))
         else:
-            return zip(*self)
+            return list(zip(*self))
 
     def to_csv(self, output, **kwargs):
         """

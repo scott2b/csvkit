@@ -21,7 +21,7 @@ Sort CSV files. Like unix "sort" command, but for tabular data::
       -h, --help            show this help message and exit
       -y SNIFFLIMIT, --snifflimit SNIFFLIMIT
                             Limit CSV dialect sniffing to the specified number of
-                            bytes.
+                            bytes. Specify "0" to disable sniffing entirely.
                             Specify the encoding the input file.
       -n, --names           Display column names and indices from the input CSV
                             and exit.
@@ -29,7 +29,8 @@ Sort CSV files. Like unix "sort" command, but for tabular data::
                             A comma separated list of column indices or names to
                             be extracted. Defaults to all columns.
       -r, --reverse         Sort in descending order.
-
+      --no-inference        Disable type inference when parsing the input.
+ 
 Also see: :doc:`common_arguments`.
 
 Examples

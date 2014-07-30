@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-from cStringIO import StringIO
 import json
+
+import six
 
 from csvkit import CSVKitWriter
 
@@ -21,7 +22,7 @@ def parse_object(obj, path=''):
     d = {}
 
     for key, value in iterator:
-        key = unicode(key)
+        key = six.text_type(key)
         d.update(parse_object(value, path + key + '/'))
 
     return d
@@ -55,7 +56,7 @@ def json2csv(f, key=None, **kwargs):
 
     fields = sorted(list(field_set))
 
-    o = StringIO()
+    o = six.StringIO()
     writer = CSVKitWriter(o)
 
     writer.writerow(fields)

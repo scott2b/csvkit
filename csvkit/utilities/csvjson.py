@@ -3,12 +3,15 @@
 import json
 import codecs
 
+import six
+
 from csvkit import CSVKitReader
 from csvkit.cli import CSVKitUtility, match_column_identifier
 from csvkit.exceptions import NonUniqueKeyColumnException
 
 class CSVJSON(CSVKitUtility):
     description = 'Convert a CSV file into JSON (or GeoJSON).'
+    override_flags = ['H']
 
     def add_arguments(self):
         self.argparser.add_argument('-i', '--indent', dest='indent', type=int, default=None,
@@ -35,10 +38,13 @@ class CSVJSON(CSVKitUtility):
         if self.args.crs and not self.args.lat:
             self.argparser.error('--crs is only allowed when --lat and --lon are also specified.')
 
-        rows = CSVKitReader(self.args.file, **self.reader_kwargs)
-        column_names = rows.next()
+        rows = CSVKitReader(self.input_file, **self.reader_kwargs)
+        column_names = next(rows)
 
-        stream = codecs.getwriter('utf-8')(self.output_file)
+        if six.PY2:
+            stream = codecs.getwriter('utf-8')(self.output_file)
+        else:
+            stream = self.output_file 
 
         # GeoJSON
         if self.args.lat and self.args.lon:
@@ -119,14 +125,22 @@ class CSVJSON(CSVKitUtility):
                 k = row_dict[self.args.key]
 
                 if k in output:
-                    raise NonUniqueKeyColumnException('Value %s is not unique in the key column.' % unicode(k))
+                    raise NonUniqueKeyColumnException('Value %s is not unique in the key column.' % six.text_type(k))
 
                 output[k] = row_dict
         # Boring JSON
         else:
             output = [dict(zip(column_names, row)) for row in rows]
 
-        json.dump(output, stream, ensure_ascii=False, indent=self.args.indent, encoding='utf-8')
+        kwargs = {
+            'ensure_ascii': False,
+            'indent': self.args.indent,
+        }
+
+        if six.PY2:
+            kwargs['encoding'] = 'utf-8'
+
+        json.dump(output, stream, **kwargs)
 
 
 def launch_new_instance():
